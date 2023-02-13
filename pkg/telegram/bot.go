@@ -1,22 +1,32 @@
 package telegram
 
 import (
-	"errors"
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"musicFromVideo/pkg/downloader"
 	"os"
 )
 
 type Bot struct {
-	bot      *tgbotapi.BotAPI
-	username string
+	bot        *tgbotapi.BotAPI
+	username   string
+	downloader downloader.Downloader
 }
 
 func NewBot(token string, username string) *Bot {
 	botAPI, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		panic(err)
+		err = fmt.Errorf("failed to create bot: %w\n", err)
 	}
-	return &Bot{bot: botAPI, username: username}
+	downloaderService, err := downloader.NewDownloader()
+	if err != nil {
+		err = fmt.Errorf("failed to create downloader: %w\n", err)
+	}
+	return &Bot{
+		bot:        botAPI,
+		username:   username,
+		downloader: *downloaderService,
+	}
 }
 
 func (b *Bot) Run() error {
@@ -29,10 +39,6 @@ func (b *Bot) Run() error {
 
 	for update := range updates {
 		if update.Message == nil {
-			continue
-		}
-
-		if update.Message.IsCommand() {
 			continue
 		}
 
@@ -52,7 +58,15 @@ func (b *Bot) sendAudio(chatID int64, filename string) error {
 	audioCfg := tgbotapi.NewAudio(chatID, file)
 	audioCfg.Caption = "Downloaded via @" + b.username
 	if _, err := b.bot.Send(audioCfg); err != nil {
-		return errors.New("error sending audio")
+		return fmt.Errorf("error sending audio: %w\n", err)
+	}
+	return nil
+}
+
+func (b *Bot) sendMessage(chatID int64, text string) error {
+	msg := tgbotapi.NewMessage(chatID, text)
+	if _, err := b.bot.Send(msg); err != nil {
+		return err
 	}
 	return nil
 }

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 	"log"
@@ -26,21 +27,26 @@ type EnvVars struct {
 	Token string
 }
 
-func NewConfig() *Config {
+func NewConfig() (*Config, error) {
 	var config Config
-	config.getConfigs()
-	return &config
+	if err := config.getConfigs(); err != nil {
+		err = fmt.Errorf("error reading configs: %w\n", err)
+		return nil, err
+	}
+	return &config, nil
 }
 
-func (c *Config) getConfigs() {
+func (c *Config) getConfigs() error {
 	yamlFile, err := os.ReadFile("pkg/config/config.yaml")
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("error reading config.yaml: %v\n", err)
 	}
+
 	err = yaml.Unmarshal(yamlFile, &c.YamlFileCfg)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling config.yaml: %w\n", err)
+	}
 
 	c.Token = os.Getenv("TG_BOT_TOKEN")
-	if err != nil {
-		log.Fatal(err)
-	}
+	return nil
 }

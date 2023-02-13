@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/kkdai/youtube/v2"
-	"log"
 	"os"
 	"os/exec"
 	"regexp"
@@ -22,6 +21,7 @@ type Downloader struct {
 func NewDownloader() (*Downloader, error) {
 	r, err := regexp.Compile(expression)
 	if err != nil {
+		err = fmt.Errorf("error compiling regexp: %w\n", err)
 		return nil, err
 	}
 	return &Downloader{
@@ -31,13 +31,15 @@ func NewDownloader() (*Downloader, error) {
 
 func (d *Downloader) Download(url string) (string, error) {
 	if !d.IsValidURL(url) {
-		return "", errors.New("invalid url")
+		err := fmt.Errorf("invalid url\n")
+		return "", err
 	}
 
 	client := youtube.Client{}
 
 	video, err := client.GetVideo(url)
 	if err != nil {
+		err = fmt.Errorf("unable to get video: %w\n", err)
 		return "", err
 	}
 
@@ -54,15 +56,18 @@ func (d *Downloader) Download(url string) (string, error) {
 
 	data, err := cmd.CombinedOutput()
 	if err != nil {
+		err = fmt.Errorf("combined output error: %w\n", err)
 		return "", err
 	}
 
 	if strings.Contains(string(data), "ERROR") {
 		err = d.deleteFile("filename")
 		if err != nil {
-			log.Printf("file %s wasn't deleted\n", filename)
+			err = fmt.Errorf("file %s wasn't deleted: %w\n", filename, err)
+			return "", err
 		}
-		return "", errors.New(fmt.Sprintf("error downloading video with youtube-dl, output: %s", string(data)))
+		err = fmt.Errorf("error downloading video with youtube-dl, output: %s", string(data))
+		return "", err
 	}
 	return filename + ".mp3", nil
 }

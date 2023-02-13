@@ -6,7 +6,10 @@ import (
 )
 
 func main() {
-	cfg := config.NewConfig()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		panic(err)
+	}
 
 	bot := tg.NewBot(cfg.Token, cfg.BotUsername)
 
