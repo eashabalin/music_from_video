@@ -14,6 +14,10 @@ import (
 
 const expression = "^(http(s)?:\\/\\/)?((w){3}.)?(music\\.)?youtu(be|.be)?(\\.com)?\\/.+"
 
+var (
+	ErrorDurationTooLong = errors.New("duration too long")
+)
+
 type Downloader struct {
 	regexpr regexp.Regexp
 }
@@ -46,7 +50,7 @@ func (d *Downloader) Download(url string) (string, error) {
 	filename := video.Title
 
 	if video.Duration.Minutes() > 10 {
-		return "", errors.New("duration too long")
+		return "", ErrorDurationTooLong
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*180)

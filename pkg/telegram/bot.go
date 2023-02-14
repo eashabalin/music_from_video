@@ -13,20 +13,26 @@ type Bot struct {
 	downloader downloader.Downloader
 }
 
-func NewBot(token string, username string) *Bot {
+func NewBot(token string, username string) (*Bot, error) {
 	botAPI, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		err = fmt.Errorf("failed to create bot: %w\n", err)
+		return nil, err
 	}
 	downloaderService, err := downloader.NewDownloader()
 	if err != nil {
 		err = fmt.Errorf("failed to create downloader: %w\n", err)
+		return nil, err
+	}
+	if err != nil {
+		err = fmt.Errorf("failed to create poller: %w\n", err)
+		return nil, err
 	}
 	return &Bot{
 		bot:        botAPI,
 		username:   username,
 		downloader: *downloaderService,
-	}
+	}, nil
 }
 
 func (b *Bot) Run() error {
@@ -38,14 +44,10 @@ func (b *Bot) Run() error {
 	updates := b.bot.GetUpdatesChan(updateConfig)
 
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-
-		if err := b.handleMessage(update.Message); err != nil {
+		err := b.handleUpdate(update)
+		if err != nil {
 			return err
 		}
-
 	}
 	return nil
 }

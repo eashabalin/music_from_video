@@ -11,7 +11,10 @@ func main() {
 		panic(err)
 	}
 
-	bot := tg.NewBot(cfg.Token, cfg.BotUsername)
+	bot, err := tg.NewBot(cfg.Token, cfg.BotUsername)
+	if err != nil {
+		panic(err)
+	}
 
 	if err := bot.Run(); err != nil {
 		panic(err)
