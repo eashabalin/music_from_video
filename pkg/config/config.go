@@ -20,7 +20,9 @@ type Config struct {
 }
 
 type YamlFileCfg struct {
-	BotUsername string `yaml:"bot_username"`
+	BotUsername        string `yaml:"bot_username"`
+	MaxDurationMin     int    `yaml:"max_video_duration_min"`
+	MaxDownloadTimeSec int    `yaml:"max_download_time_sec"`
 }
 
 type EnvVars struct {

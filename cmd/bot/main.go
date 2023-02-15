@@ -3,6 +3,7 @@ package main
 import (
 	"musicFromVideo/pkg/config"
 	tg "musicFromVideo/pkg/telegram"
+	"time"
 )
 
 func main() {
@@ -11,7 +12,11 @@ func main() {
 		panic(err)
 	}
 
-	bot, err := tg.NewBot(cfg.Token, cfg.BotUsername)
+	bot, err := tg.NewBot(
+		cfg.Token, cfg.BotUsername,
+		time.Duration(cfg.MaxDurationMin)*time.Minute,
+		time.Duration(cfg.MaxDownloadTimeSec)*time.Second,
+	)
 	if err != nil {
 		panic(err)
 	}

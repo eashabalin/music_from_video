@@ -30,7 +30,7 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) error {
 			err := <-errChan
 			fmt.Println("error: ", err)
 			if err == downloader.ErrorDurationTooLong {
-				b.sendMessage(message.Chat.ID, "Видео должно быть короче 10 минут.")
+				b.sendMessage(message.Chat.ID, fmt.Sprintf("Видео должно быть короче %.0f минут.", b.maxVideoDuration.Minutes()))
 				return
 			}
 			b.sendMessage(message.Chat.ID, "Не получается обработать эту ссылку.")
@@ -61,10 +61,6 @@ func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
 	}
 	filename, err := b.downloader.Download(url)
 	if err != nil {
-		errChan <- err
-		return
-	}
-	if err != nil {
 		errChan <- fmt.Errorf("failed to download: %w\n", err)
 		return
 	}
@@ -73,5 +69,4 @@ func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
 		return
 	}
 	errChan <- nil
-	close(errChan)
 }

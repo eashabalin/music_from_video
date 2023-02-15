@@ -5,21 +5,24 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"musicFromVideo/pkg/downloader"
 	"os"
+	"time"
 )
 
 type Bot struct {
-	bot        *tgbotapi.BotAPI
-	username   string
-	downloader downloader.Downloader
+	bot              *tgbotapi.BotAPI
+	username         string
+	downloader       downloader.Downloader
+	maxVideoDuration time.Duration
+	maxDownloadTime  time.Duration
 }
 
-func NewBot(token string, username string) (*Bot, error) {
+func NewBot(token string, username string, maxVideoDuration, maxDownloadTime time.Duration) (*Bot, error) {
 	botAPI, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		err = fmt.Errorf("failed to create bot: %w\n", err)
 		return nil, err
 	}
-	downloaderService, err := downloader.NewDownloader()
+	downloaderService, err := downloader.NewDownloader(maxVideoDuration, maxDownloadTime)
 	if err != nil {
 		err = fmt.Errorf("failed to create downloader: %w\n", err)
 		return nil, err
@@ -29,9 +32,11 @@ func NewBot(token string, username string) (*Bot, error) {
 		return nil, err
 	}
 	return &Bot{
-		bot:        botAPI,
-		username:   username,
-		downloader: *downloaderService,
+		bot:              botAPI,
+		username:         username,
+		downloader:       *downloaderService,
+		maxVideoDuration: maxVideoDuration,
+		maxDownloadTime:  maxDownloadTime,
 	}, nil
 }
 

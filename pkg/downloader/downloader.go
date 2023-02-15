@@ -19,17 +19,21 @@ var (
 )
 
 type Downloader struct {
-	regexpr regexp.Regexp
+	regexpr         regexp.Regexp
+	maxDuration     time.Duration
+	maxDownloadTime time.Duration
 }
 
-func NewDownloader() (*Downloader, error) {
+func NewDownloader(maxVideoDuration time.Duration, maxDownloadTime time.Duration) (*Downloader, error) {
 	r, err := regexp.Compile(expression)
 	if err != nil {
 		err = fmt.Errorf("error compiling regexp: %w\n", err)
 		return nil, err
 	}
 	return &Downloader{
-		regexpr: *r,
+		regexpr:         *r,
+		maxDuration:     maxVideoDuration,
+		maxDownloadTime: maxDownloadTime,
 	}, nil
 }
 
@@ -49,11 +53,11 @@ func (d *Downloader) Download(url string) (string, error) {
 
 	filename := video.Title
 
-	if video.Duration.Minutes() > 10 {
+	if video.Duration > d.maxDuration {
 		return "", ErrorDurationTooLong
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*180)
+	ctx, cancel := context.WithTimeout(context.Background(), d.maxDownloadTime)
 
 	cmd := exec.CommandContext(ctx, "youtube-dl", "-x", "--audio-format", "mp3", url, "-o", "downloads/"+filename+".%(ext)s", "--no-playlist")
 	defer cancel()
