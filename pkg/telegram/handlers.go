@@ -33,6 +33,10 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) error {
 				b.sendMessage(message.Chat.ID, fmt.Sprintf("Видео должно быть короче %.0f минут.", b.maxVideoDuration.Minutes()))
 				return
 			}
+			if err != nil {
+				fmt.Println("error: ", err)
+				return
+			}
 			b.sendMessage(message.Chat.ID, "Не получается обработать эту ссылку.")
 		}()
 		return nil
@@ -68,5 +72,4 @@ func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
 		errChan <- fmt.Errorf("failed to send audio: %w\n", err)
 		return
 	}
-	errChan <- nil
 }
