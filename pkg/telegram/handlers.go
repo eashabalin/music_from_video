@@ -35,9 +35,9 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) error {
 			}
 			if err != nil {
 				fmt.Println("error: ", err)
+				b.sendMessage(message.Chat.ID, "Не получается обработать эту ссылку.")
 				return
 			}
-			b.sendMessage(message.Chat.ID, "Не получается обработать эту ссылку.")
 		}()
 		return nil
 	}
