@@ -1,52 +1,54 @@
 package telegram
 
 import (
-	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"musicFromVideo/pkg/downloader"
 )
 
-func (b *Bot) handleUpdate(update tgbotapi.Update) error {
-	if update.Message != nil {
-		err := b.handleMessage(update.Message)
-		if err != nil {
-			return err
+const (
+	commandStart = "start"
+)
+
+func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
+	for update := range updates {
+		if update.Message == nil {
+			continue
+		}
+		if update.Message.IsCommand() {
+			if err := b.handleCommand(update.Message); err != nil {
+				b.handleError(update.Message.Chat.ID, err)
+			}
+			continue
+		}
+		if err := b.handleMessage(update.Message); err != nil {
+			b.handleError(update.Message.Chat.ID, err)
 		}
 	}
-	return nil
+}
+
+func (b *Bot) handleCommand(message *tgbotapi.Message) error {
+	switch message.Command() {
+	case commandStart:
+		return b.handleStartCommand(message.Chat.ID)
+	default:
+		return b.handleUnknownCommand(message.Chat.ID)
+
+	}
 }
 
 func (b *Bot) handleMessage(message *tgbotapi.Message) error {
-	if message.IsCommand() && message.Command() == "start" {
-		if err := b.handleStartCommand(message.Chat.ID); err != nil {
-			return err
-		}
-	}
-
 	if b.downloader.IsValidURL(message.Text) {
 		go func() {
 			errChan := make(chan error, 1)
 			go b.handleURL(message.Chat.ID, message.Text, errChan)
 			err := <-errChan
-			fmt.Println("error: ", err)
-			if err == downloader.ErrorDurationTooLong {
-				b.sendMessage(message.Chat.ID, fmt.Sprintf("Видео должно быть короче %.0f минут.", b.maxVideoDuration.Minutes()))
-				return
-			}
 			if err != nil {
-				fmt.Println("error: ", err)
-				b.sendMessage(message.Chat.ID, "Не получается обработать эту ссылку.")
-				return
+				b.handleError(message.Chat.ID, err)
 			}
 		}()
 		return nil
 	}
-
-	if err := b.sendMessage(message.Chat.ID, "Не могу прочитать ссылку на видео."); err != nil {
-		return err
-	}
-
-	return nil
+	return errInvalidURL
 }
 
 func (b *Bot) handleStartCommand(chatID int64) error {
@@ -54,6 +56,10 @@ func (b *Bot) handleStartCommand(chatID int64) error {
 		return err
 	}
 	return nil
+}
+
+func (b *Bot) handleUnknownCommand(chatID int64) error {
+	return b.sendMessage(chatID, "Не знаю такую команду :(")
 }
 
 func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
@@ -65,11 +71,14 @@ func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
 	}
 	filename, err := b.downloader.Download(url)
 	if err != nil {
-		errChan <- fmt.Errorf("failed to download: %w\n", err)
-		return
+		if err == downloader.ErrorDurationTooLong {
+			errChan <- errDurationTooLong
+		} else {
+			errChan <- err
+		}
 	}
 	if err = b.sendAudio(chatID, filename); err != nil {
-		errChan <- fmt.Errorf("failed to send audio: %w\n", err)
+		errChan <- errFailedToSend
 		return
 	}
 }

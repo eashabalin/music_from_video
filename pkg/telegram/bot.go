@@ -48,12 +48,8 @@ func (b *Bot) Run() error {
 
 	updates := b.bot.GetUpdatesChan(updateConfig)
 
-	for update := range updates {
-		err := b.handleUpdate(update)
-		if err != nil {
-			return err
-		}
-	}
+	b.handleUpdates(updates)
+
 	return nil
 }
 
