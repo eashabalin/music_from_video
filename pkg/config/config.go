@@ -37,6 +37,7 @@ func init() {
 	//if err := godotenv.Load(); err != nil {
 	//	log.Fatal(err)
 	//}
+	//
 }
 
 func NewConfig() (*Config, error) {
