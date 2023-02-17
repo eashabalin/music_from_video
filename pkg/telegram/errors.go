@@ -19,17 +19,15 @@ func (b *Bot) handleError(chatID int64, err error) {
 
 	switch err {
 	case errInvalidURL:
-		messageText = "Не получается обработать эту ссылку."
+		messageText = b.messages.InvalidURL
 	case errDurationTooLong:
-		messageText = fmt.Sprintf("Видео должно быть короче %.0f минут.", b.maxVideoDuration.Minutes())
-	case errUnknownCommand:
-		messageText = "Не знаю такую команду :("
+		messageText = fmt.Sprintf(b.messages.DurationTooLong+"\n", int(b.maxVideoDuration.Minutes()))
 	case errFailedToDownload:
-		messageText = "Не удалось скачать аудио."
+		messageText = b.messages.FailedToDownload
 	case errFailedToSend:
-		messageText = "Не удалось отправить аудио."
+		messageText = b.messages.FailedToSend
 	default:
-		messageText = "Произошла неизвестная ошибка."
+		messageText = b.messages.Errors.Default
 	}
 
 	b.sendMessage(chatID, messageText)

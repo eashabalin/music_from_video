@@ -3,6 +3,7 @@ package telegram
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"musicFromVideo/pkg/config"
 	"musicFromVideo/pkg/downloader"
 	"os"
 	"time"
@@ -14,9 +15,10 @@ type Bot struct {
 	downloader       downloader.Downloader
 	maxVideoDuration time.Duration
 	maxDownloadTime  time.Duration
+	messages         config.Messages
 }
 
-func NewBot(token string, username string, maxVideoDuration, maxDownloadTime time.Duration) (*Bot, error) {
+func NewBot(token string, username string, maxVideoDuration, maxDownloadTime time.Duration, messages config.Messages) (*Bot, error) {
 	botAPI, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		err = fmt.Errorf("failed to create bot: %w\n", err)
@@ -37,6 +39,7 @@ func NewBot(token string, username string, maxVideoDuration, maxDownloadTime tim
 		downloader:       *downloaderService,
 		maxVideoDuration: maxVideoDuration,
 		maxDownloadTime:  maxDownloadTime,
+		messages:         messages,
 	}, nil
 }
 

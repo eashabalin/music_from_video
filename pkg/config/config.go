@@ -8,25 +8,37 @@ import (
 	"os"
 )
 
+type Config struct {
+	Token              string
+	BotUsername        string   `yaml:"bot_username"`
+	MaxDurationMin     int      `yaml:"max_video_duration_min"`
+	MaxDownloadTimeSec int      `yaml:"max_download_time_sec"`
+	Messages           Messages `yaml:"messages"`
+}
+
+type Messages struct {
+	Responses `yaml:"response"`
+	Errors    `yaml:"error"`
+}
+
+type Responses struct {
+	Start          string `yaml:"start"`
+	UnknownCommand string `yaml:"unknown_command"`
+	Loading        string `yaml:"loading"`
+}
+
+type Errors struct {
+	InvalidURL       string `yaml:"invalid_url"`
+	DurationTooLong  string `yaml:"duration_too_long"`
+	FailedToDownload string `yaml:"failed_to_download"`
+	FailedToSend     string `yaml:"failed_to_send"`
+	Default          string `yaml:"default"`
+}
+
 func init() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-type Config struct {
-	YamlFileCfg
-	EnvVars
-}
-
-type YamlFileCfg struct {
-	BotUsername        string `yaml:"bot_username"`
-	MaxDurationMin     int    `yaml:"max_video_duration_min"`
-	MaxDownloadTimeSec int    `yaml:"max_download_time_sec"`
-}
-
-type EnvVars struct {
-	Token string
 }
 
 func NewConfig() (*Config, error) {
@@ -39,12 +51,13 @@ func NewConfig() (*Config, error) {
 }
 
 func (c *Config) getConfigs() error {
-	yamlFile, err := os.ReadFile("pkg/config/config.yaml")
+	yamlFile, err := os.ReadFile("config/config.yaml")
 	if err != nil {
 		return fmt.Errorf("error reading config.yaml: %v\n", err)
 	}
 
-	err = yaml.Unmarshal(yamlFile, &c.YamlFileCfg)
+	err = yaml.Unmarshal(yamlFile, &c)
+	fmt.Println(c)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling config.yaml: %w\n", err)
 	}

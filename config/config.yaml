@@ -1,0 +1,15 @@
+bot_username: LowDnoTeamYtMusicBot
+max_video_duration_min: 10
+max_download_time_sec: 180
+
+messages:
+  response:
+    start: "Привет! Отправь ссылку на видео на YouTube, из которого хочешь достать музыку."
+    unknown_command: "Не знаю такую команду :("
+    loading: "Загрузка..."
+  error:
+    invalid_url: "Не получается обработать эту ссылку."
+    duration_too_long: "Видео должно быть короче %d минут."
+    failed_to_download: "Не удалось скачать аудио по этой ссылке."
+    failed_to_send: "Не удалось отправить аудио."
+    default: "Произошла неизвестная ошибка."

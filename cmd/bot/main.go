@@ -16,6 +16,7 @@ func main() {
 		cfg.Token, cfg.BotUsername,
 		time.Duration(cfg.MaxDurationMin)*time.Minute,
 		time.Duration(cfg.MaxDownloadTimeSec)*time.Second,
+		cfg.Messages,
 	)
 	if err != nil {
 		panic(err)

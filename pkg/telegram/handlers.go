@@ -52,19 +52,19 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) error {
 }
 
 func (b *Bot) handleStartCommand(chatID int64) error {
-	if err := b.sendMessage(chatID, "Привет! Отправь ссылку на видео на YouTube, из которого хочешь достать музыку."); err != nil {
+	if err := b.sendMessage(chatID, b.messages.Start); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (b *Bot) handleUnknownCommand(chatID int64) error {
-	return b.sendMessage(chatID, "Не знаю такую команду :(")
+	return b.sendMessage(chatID, b.messages.UnknownCommand)
 }
 
 func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
 	defer close(errChan)
-	err := b.sendMessage(chatID, "Загрузка...")
+	err := b.sendMessage(chatID, b.messages.Loading)
 	if err != nil {
 		errChan <- err
 		return
@@ -74,7 +74,7 @@ func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
 		if err == downloader.ErrorDurationTooLong {
 			errChan <- errDurationTooLong
 		} else {
-			errChan <- err
+			errChan <- errFailedToDownload
 		}
 	}
 	if err = b.sendAudio(chatID, filename); err != nil {
