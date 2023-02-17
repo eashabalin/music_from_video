@@ -8,7 +8,6 @@ import (
 var (
 	errInvalidURL       = errors.New("invalid url")
 	errDurationTooLong  = errors.New("duration too long")
-	errUnknownCommand   = errors.New("unknown command")
 	errFailedToDownload = errors.New("failed to download")
 	errFailedToSend     = errors.New("failed to send audio")
 )

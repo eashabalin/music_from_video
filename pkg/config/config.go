@@ -2,9 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
-	"log"
 	"os"
 )
 
@@ -36,9 +34,9 @@ type Errors struct {
 }
 
 func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal(err)
-	}
+	//if err := godotenv.Load(); err != nil {
+	//	log.Fatal(err)
+	//}
 }
 
 func NewConfig() (*Config, error) {
