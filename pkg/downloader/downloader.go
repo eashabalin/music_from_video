@@ -59,7 +59,7 @@ func (d *Downloader) Download(url string) (string, error) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), d.maxDownloadTime)
 
-	cmd := exec.CommandContext(ctx, "youtube-dl", "-x", "--audio-format", "mp3", url, "-o", "downloads/"+filename+".%(ext)s", "--no-playlist")
+	cmd := exec.CommandContext(ctx, "yt-dlp", "-x", "--audio-format", "mp3", url, "-o", "downloads/"+filename+".%(ext)s", "--no-playlist")
 	defer cancel()
 
 	data, err := cmd.CombinedOutput()

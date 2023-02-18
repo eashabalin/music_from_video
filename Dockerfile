@@ -1,6 +1,4 @@
-FROM golang:alpine AS builder
-
-RUN apk update && apk add ffmpeg && apk add youtube-dl
+FROM golang AS builder
 
 COPY . /musicFromVideo/
 
@@ -9,9 +7,12 @@ WORKDIR /musicFromVideo/
 RUN go mod download
 RUN go build -o bin/bot cmd/bot/main.go
 
-FROM alpine:latest
+FROM buildpack-deps:bullseye-scm
 
-RUN apk update && apk add ffmpeg && apk add youtube-dl
+RUN apt-get update && apt-get install curl -y --no-install-recommends && apt-get install ffmpeg  -y --no-install-recommends
+
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+RUN chmod a+rx /usr/local/bin/yt-dlp
 
 WORKDIR /root/
 
