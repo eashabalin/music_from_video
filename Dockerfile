@@ -11,6 +11,8 @@ RUN go build -o bin/bot cmd/bot/main.go
 
 FROM alpine:latest
 
+RUN apk update && apk add ffmpeg && apk add youtube-dl
+
 WORKDIR /root/
 
 COPY --from=builder /musicFromVideo/bin/bot .
