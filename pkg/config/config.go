@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
+	"log"
 	"os"
 )
 
@@ -34,10 +36,9 @@ type Errors struct {
 }
 
 func init() {
-	//if err := godotenv.Load(); err != nil {
-	//	log.Fatal(err)
-	//}
-	//
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func NewConfig() (*Config, error) {
@@ -56,11 +57,15 @@ func (c *Config) getConfigs() error {
 	}
 
 	err = yaml.Unmarshal(yamlFile, &c)
-	fmt.Println(c)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling config.yaml: %w\n", err)
 	}
 
-	c.Token = os.Getenv("TG_BOT_TOKEN")
+	token, ok := os.LookupEnv("TG_BOT_TOKEN")
+	if !ok {
+		return fmt.Errorf("not found env variable TG_BOT_TOKEN")
+	}
+	c.Token = token
+
 	return nil
 }
