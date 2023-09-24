@@ -3,6 +3,7 @@ package telegram
 import (
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"musicFromVideo/pkg/cache"
 	"musicFromVideo/pkg/config"
 	"musicFromVideo/pkg/downloader"
 	"os"
@@ -16,9 +17,17 @@ type Bot struct {
 	maxVideoDuration time.Duration
 	maxDownloadTime  time.Duration
 	messages         config.Messages
+	cache            *cache.Cache
 }
 
-func NewBot(token string, username string, maxVideoDuration, maxDownloadTime time.Duration, messages config.Messages) (*Bot, error) {
+func NewBot(
+	token string,
+	username string,
+	maxVideoDuration,
+	maxDownloadTime time.Duration,
+	messages config.Messages,
+	cache *cache.Cache,
+) (*Bot, error) {
 	botAPI, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		err = fmt.Errorf("failed to create bot: %w\n", err)
@@ -40,6 +49,7 @@ func NewBot(token string, username string, maxVideoDuration, maxDownloadTime tim
 		maxVideoDuration: maxVideoDuration,
 		maxDownloadTime:  maxDownloadTime,
 		messages:         messages,
+		cache:            cache,
 	}, nil
 }
 
@@ -65,6 +75,19 @@ func (b *Bot) sendAudio(chatID int64, filename string) error {
 	audioCfg.Caption = "Downloaded via @" + b.username
 	if _, err := b.bot.Send(audioCfg); err != nil {
 		return fmt.Errorf("error sending audio: %w\n", err)
+	}
+	return nil
+}
+
+func (b *Bot) sendVideo(chatID int64, filename string) error {
+	path := "downloads/" + filename
+	defer os.Remove(path)
+
+	file := tgbotapi.FilePath(path)
+	videoCfg := tgbotapi.NewAudio(chatID, file)
+	videoCfg.Caption = "Downloaded via @" + b.username
+	if _, err := b.bot.Send(videoCfg); err != nil {
+		return fmt.Errorf("error sending video: %w\n", err)
 	}
 	return nil
 }

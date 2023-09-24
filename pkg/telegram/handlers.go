@@ -7,6 +7,7 @@ import (
 
 const (
 	commandStart = "start"
+	video        = "video"
 )
 
 func (b *Bot) handleUpdates(updates tgbotapi.UpdatesChannel) {
@@ -30,6 +31,8 @@ func (b *Bot) handleCommand(message *tgbotapi.Message) error {
 	switch message.Command() {
 	case commandStart:
 		return b.handleStartCommand(message.Chat.ID)
+	case video:
+		return b.handleVideoCommand(message.Chat.ID)
 	default:
 		return b.handleUnknownCommand(message.Chat.ID)
 
@@ -53,6 +56,13 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) error {
 
 func (b *Bot) handleStartCommand(chatID int64) error {
 	if err := b.sendMessage(chatID, b.messages.Start); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Bot) handleVideoCommand(chatID int64) error {
+	if err := b.sendMessage(chatID, b.messages.Video); err != nil {
 		return err
 	}
 	return nil

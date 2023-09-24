@@ -1,6 +1,7 @@
 package main
 
 import (
+	"musicFromVideo/pkg/cache"
 	"musicFromVideo/pkg/config"
 	tg "musicFromVideo/pkg/telegram"
 	"time"
@@ -8,7 +9,11 @@ import (
 
 func main() {
 	cfg, err := config.NewConfig()
+	if err != nil {
+		panic(err)
+	}
 
+	c, err := cache.NewCache()
 	if err != nil {
 		panic(err)
 	}
@@ -18,6 +23,7 @@ func main() {
 		time.Duration(cfg.MaxDurationMin)*time.Minute,
 		time.Duration(cfg.MaxDownloadTimeSec)*time.Second,
 		cfg.Messages,
+		c,
 	)
 	if err != nil {
 		panic(err)
