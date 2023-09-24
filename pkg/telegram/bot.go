@@ -84,7 +84,7 @@ func (b *Bot) sendVideo(chatID int64, filename string) error {
 	defer os.Remove(path)
 
 	file := tgbotapi.FilePath(path)
-	videoCfg := tgbotapi.NewAudio(chatID, file)
+	videoCfg := tgbotapi.NewVideo(chatID, file)
 	videoCfg.Caption = "Downloaded via @" + b.username
 	if _, err := b.bot.Send(videoCfg); err != nil {
 		return fmt.Errorf("error sending video: %w\n", err)

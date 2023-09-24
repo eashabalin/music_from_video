@@ -1,7 +1,9 @@
 package telegram
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"musicFromVideo/pkg/cache"
 	"musicFromVideo/pkg/downloader"
 )
 
@@ -55,6 +57,11 @@ func (b *Bot) handleMessage(message *tgbotapi.Message) error {
 }
 
 func (b *Bot) handleStartCommand(chatID int64) error {
+	err := b.cache.SetUserState(chatID, cache.WaitingForAudio)
+	if err != nil {
+		return err
+	}
+
 	if err := b.sendMessage(chatID, b.messages.Start); err != nil {
 		return err
 	}
@@ -62,6 +69,11 @@ func (b *Bot) handleStartCommand(chatID int64) error {
 }
 
 func (b *Bot) handleVideoCommand(chatID int64) error {
+	err := b.cache.SetUserState(chatID, cache.WaitingForVideo)
+	if err != nil {
+		return err
+	}
+
 	if err := b.sendMessage(chatID, b.messages.Video); err != nil {
 		return err
 	}
@@ -73,22 +85,41 @@ func (b *Bot) handleUnknownCommand(chatID int64) error {
 }
 
 func (b *Bot) handleURL(chatID int64, url string, errChan chan error) {
+	userState := b.cache.GetUserState(chatID)
+
 	defer close(errChan)
 	err := b.sendMessage(chatID, b.messages.Loading)
 	if err != nil {
 		errChan <- err
 		return
 	}
-	filename, err := b.downloader.Download(url)
+
+	filename, err := "", nil
+	if *userState == cache.WaitingForAudio {
+		filename, err = b.downloader.DownloadAudio(url)
+	} else if *userState == cache.WaitingForVideo {
+		filename, err = b.downloader.DownloadVideo(url)
+	}
+
 	if err != nil {
 		if err == downloader.ErrorDurationTooLong {
-			errChan <- errDurationTooLong
+			errChan <- fmt.Errorf("%s: %s\n", errDurationTooLong, err)
 		} else {
-			errChan <- errFailedToDownload
+			errChan <- fmt.Errorf("%s: %s\n", errFailedToDownload, err)
 		}
 	}
-	if err = b.sendAudio(chatID, filename); err != nil {
-		errChan <- errFailedToSend
+
+	err = nil
+	if *userState == cache.WaitingForAudio {
+		err = b.sendAudio(chatID, filename)
+	} else if *userState == cache.WaitingForVideo {
+		err = b.sendVideo(chatID, filename)
+		b.cache.SetUserState(chatID, cache.WaitingForAudio)
+	}
+
+	if err != nil {
+		errChan <- fmt.Errorf("%s: %s\n", errFailedToSend, err)
 		return
 	}
+
 }

@@ -37,14 +37,29 @@ func NewDownloader(maxVideoDuration time.Duration, maxDownloadTime time.Duration
 	}, nil
 }
 
-func (d *Downloader) Download(url string) (string, error) {
+func (d *Downloader) DownloadAudio(url string) (string, error) {
+	filename, err := d.checkUrlAndDownload(url, d.callYtDlpForAudio)
+	if err != nil {
+		return "", err
+	}
+	return filename + ".mp3", err
+}
+
+func (d *Downloader) DownloadVideo(url string) (string, error) {
+	filename, err := d.checkUrlAndDownload(url, d.callYtDlpForVideo)
+	if err != nil {
+		return "", err
+	}
+	return filename + ".mp4", err
+}
+
+func (d *Downloader) checkUrlAndDownload(url string, ytDlpCall YtDlpCall) (string, error) {
 	if !d.IsValidURL(url) {
 		err := fmt.Errorf("invalid url\n")
 		return "", err
 	}
 
 	client := youtube.Client{}
-
 	video, err := client.GetVideo(url)
 	if err != nil {
 		err = fmt.Errorf("unable to get video: %w\n", err)
@@ -57,6 +72,17 @@ func (d *Downloader) Download(url string) (string, error) {
 		return "", ErrorDurationTooLong
 	}
 
+	err = ytDlpCall(url, filename)
+	if err != nil {
+		return "", err
+	}
+
+	return filename, nil
+}
+
+type YtDlpCall func(string, string) error
+
+func (d *Downloader) callYtDlpForAudio(url string, filename string) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), d.maxDownloadTime)
 
 	cmd := exec.CommandContext(ctx, "yt-dlp", "-x", "--audio-format", "mp3", url, "-o", "downloads/"+filename+".mp3", "--no-playlist")
@@ -64,20 +90,25 @@ func (d *Downloader) Download(url string) (string, error) {
 
 	data, err := cmd.CombinedOutput()
 	if err != nil {
-		err = fmt.Errorf("combined output error: %w\n", err)
-		return "", err
+		err = fmt.Errorf("yt-dlp output error: %w\n. output: %s\n", err, string(data))
+		return err
 	}
 
-	if strings.Contains(string(data), "ERROR") {
-		err = d.deleteFile("filename")
-		if err != nil {
-			err = fmt.Errorf("file %s wasn't deleted: %w\n", filename, err)
-			return "", err
-		}
-		err = fmt.Errorf("error downloading video with youtube-dl, output: %s", string(data))
-		return "", err
+	return nil
+}
+
+func (d *Downloader) callYtDlpForVideo(url string, filename string) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), d.maxDownloadTime)
+
+	cmd := exec.CommandContext(ctx, "yt-dlp", url, "-o", "downloads/"+filename+".mp4", "--format", "mp4")
+	defer cancel()
+
+	data, err := cmd.CombinedOutput()
+	if err != nil {
+		err = fmt.Errorf("yt-dlp output error: %w\n. output: %s\n", err, string(data))
+		return err
 	}
-	return filename + ".mp3", nil
+	return nil
 }
 
 func (d *Downloader) IsValidURL(url string) bool {

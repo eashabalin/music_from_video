@@ -9,7 +9,7 @@ var (
 	errInvalidURL       = errors.New("invalid url")
 	errDurationTooLong  = errors.New("duration too long")
 	errFailedToDownload = errors.New("failed to download")
-	errFailedToSend     = errors.New("failed to send audio")
+	errFailedToSend     = errors.New("failed to send")
 )
 
 func (b *Bot) handleError(chatID int64, err error) {
